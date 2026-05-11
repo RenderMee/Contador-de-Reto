@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Contador de Reto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #1a7a58;
+      --green-light: #e6f4ee;
+      --green-mid: #2ea87a;
+      --ink: #1c1c1a;
+      --muted: #7a7870;
+      --surface: #f9f7f3;
+      --card: #ffffff;
+      --border: rgba(0,0,0,0.08);
+      --accent: #c8f0de;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--surface);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* Background texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(30,180,110,0.07) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(26,122,88,0.06) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 460px;
+    }
+
+    /* ── SETUP SCREEN ── */
+    .setup {
+      background: var(--card);
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      padding: 3rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.05);
+    }
+
+    .setup-icon {
+      font-size: 48px;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .setup h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: var(--ink);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .setup p {
+      font-size: 15px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .input-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-wrap label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .input-wrap input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      color: var(--ink);
+      background: var(--surface);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-wrap input::placeholder { color: #b0ae a6; }
+    .input-wrap input:focus { border-color: var(--green-mid); background: #fff; }
+
+    .btn-start {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 15px 24px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-start:hover { background: #155e43; }
+    .btn-start:active { transform: scale(0.97); }
+
+    /* ── COUNTER SCREEN ── */
+    .counter {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1.5rem;
+    }
+
+    .reset-link {
+      background: none;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      padding: 0;
+    }
+
+    .reset-link:hover { color: #c0392b; }
+
+    .goal-badge {
+      background: var(--green-light);
+      color: var(--green);
+      border-radius: 100px;
+      padding: 6px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .number-block {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .big-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 110px;
+      line-height: 1;
+      color: var(--ink);
+      display: block;
+    }
+
+    .num-label {
+      font-size: 22px;
+      color: var(--muted);
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .btn-check {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 16px;
+      padding: 18px 40px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.15s, transform 0.1s;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-check:hover:not(:disabled) { background: #155e43; }
+    .btn-check:active:not(:disabled) { transform: scale(0.97); }
+
+    .btn-check:disabled {
+      background: #a8d5be;
+      cursor: not-allowed;
+    }
+
+    .already-msg {
+      background: var(--accent);
+      color: var(--green);
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 500;
+      width: 100%;
+      text-align: center;
+    }
+
+    .motivation {
+      margin-top: 1.5rem;
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+      min-height: 20px;
+      font-style: italic;
+    }
+
+    .streak-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 1.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .day-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .day-dot.done { background: var(--green-mid); }
+
+    /* ── CONFETTI ── */
+    #confetti-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      .setup { padding: 2rem 1.5rem; }
+      .big-num { font-size: 88px; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<div class="wrapper">
+
+  <!-- SETUP -->
+  <div class="setup" id="setup-view">
+    <div class="setup-icon">🌿</div>
+    <h1>Empieza tu reto</h1>
+    <p>Escribe tu meta y te crearemos un contador personalizado. El progreso se guarda en este dispositivo.</p>
+    <div class="input-wrap">
+      <label for="goal-input">Tu meta</label>
+      <input
+        type="text"
+        id="goal-input"
+        placeholder="Ej: Quiero dejar de fumar vape"
+        maxlength="80"
+        autocomplete="off"
+      />
+    </div>
+    <button class="btn-start" onclick="startCounter()">Crear mi contador →</button>
+  </div>
+
+  <!-- COUNTER -->
+  <div class="counter" id="counter-view">
+    <div class="top-bar">
+      <button class="reset-link" onclick="resetCounter()">Reiniciar desde cero</button>
+    </div>
+    <div class="goal-badge" id="display-goal"></div>
+    <div class="number-block">
+      <span class="big-num" id="day-count">0</span>
+      <div class="num-label">días</div>
+    </div>
+    <div id="check-area" style="width:100%;"></div>
+    <div class="motivation" id="motivation-text"></div>
+    <div class="streak-row" id="streak-dots"></div>
+  </div>
+
+</div>
+
+<script>
+  const DATA_KEY = 'reto_counter_v1';
+
+  const quotes = [
+    "Cada día sin vape es una victoria real.",
+    "Tu cuerpo te lo agradece. 💚",
+    "Un día a la vez. Eso es todo.",
+    "Lo que empiezas hoy, te define mañana.",
+    "La disciplina es la forma más alta de autocuidado.",
+    "Tú puedes más de lo que crees.",
+    "Pequeñas victorias, grandes cambios.",
+  ];
+
+  function goalToTitle(text) {
+    const t = text.trim();
+    const lower = t.toLowerCase();
+    if (lower.includes('dejar de fumar')) return 'Días sin fumar vape';
+    if (lower.includes('fumar')) return 'Días sin fumar';
+    if (lower.includes('vape')) return 'Días sin vape';
+    // Strip opening verbs and return as-is
+    const stripped = t.replace(/^(quiero|voy a|necesito|voy a lograr|quiero lograr)\s+/i, '');
+    return 'Días: ' + stripped.charAt(0).toLowerCase() + stripped.slice(1);
+  }
+
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function getData() {
+    try { return JSON.parse(localStorage.getItem(DATA_KEY)) || null; }
+    catch { return null; }
+  }
+
+  function saveData(d) {
+    localStorage.setItem(DATA_KEY, JSON.stringify(d));
+  }
+
+  function startCounter() {
+    const input = document.getElementById('goal-input').value.trim();
+    if (!input) { document.getElementById('goal-input').focus(); return; }
+    const d = {
+      goal: input,
+      title: goalToTitle(input),
+      days: 0,
+      lastChecked: null,
+      startDate: todayStr(),
+      history: []
+    };
+    saveData(d);
+    showCounter(d);
+  }
+
+  function showCounter(d) {
+    document.getElementById('setup-view').style.display = 'none';
+    const cv = document.getElementById('counter-view');
+    cv.style.display = 'flex';
+
+    document.getElementById('display-goal').textContent = d.title;
+    document.getElementById('day-count').textContent = d.days;
+
+    const today = todayStr();
+    const area = document.getElementById('check-area');
+
+    if (d.lastChecked === today) {
+      area.innerHTML = `<div class="already-msg">✓ ¡Ya marcaste el día de hoy!</div>`;
+    } else {
+      area.innerHTML = `<button class="btn-check" onclick="checkDay()">✓ ¡Marqué hoy sin vape!</button>`;
+    }
+
+    const motivIdx = d.days % quotes.length;
+    document.getElementById('motivation-text').textContent = d.days > 0 ? quotes[motivIdx] : 'Presiona el botón al final de cada día.';
+
+    // Draw streak dots (last 14 days)
+    const dots = document.getElementById('streak-dots');
+    dots.innerHTML = '';
+    const history = d.history || [];
+    for (let i = 13; i >= 0; i--) {
+      const dt = new Date();
+      dt.setDate(dt.getDate() - i);
+      const s = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+      const dot = document.createElement('div');
+      dot.className = 'day-dot' + (history.includes(s) ? ' done' : '');
+      dot.title = s;
+      dots.appendChild(dot);
+    }
+  }
+
+  function checkDay() {
+    let d = getData();
+    if (!d) return;
+    const today = todayStr();
+    if (d.lastChecked === today) return;
+    d.days += 1;
+    d.lastChecked = today;
+    if (!d.history) d.history = [];
+    d.history.push(today);
+    saveData(d);
+    document.getElementById('day-count').textContent = d.days;
+    showCounter(d);
+    launchConfetti();
+  }
+
+  function resetCounter() {
+    if (!confirm('¿Segura que quieres reiniciar el contador a 0? Esto borrará todo el progreso.')) return;
+    localStorage.removeItem(DATA_KEY);
+    document.getElementById('counter-view').style.display = 'none';
+    document.getElementById('setup-view').style.display = 'flex';
+    document.getElementById('goal-input').value = '';
+  }
+
+  // ── CONFETTI ──
+  function launchConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const colors = ['#1a7a58','#2ea87a','#c8f0de','#a8d5be','#155e43','#6fcba0'];
+    const pieces = Array.from({length: 140}, () => ({
+      x: Math.random() * canvas.width,
+      y: -10 - Math.random() * 40,
+      r: 4 + Math.random() * 6,
+      c: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - 0.5) * 5,
+      vy: 3 + Math.random() * 5,
+      rot: Math.random() * 360,
+      vr: (Math.random() - 0.5) * 10,
+      shape: Math.random() > 0.5 ? 'rect' : 'circle'
+    }));
+    let frame = 0;
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces.forEach(p => {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot * Math.PI / 180);
+        ctx.fillStyle = p.c;
+        if (p.shape === 'rect') ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6);
+        else { ctx.beginPath(); ctx.arc(0, 0, p.r / 2, 0, Math.PI * 2); ctx.fill(); }
+        ctx.restore();
+        p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.vy += 0.1;
+      });
+      frame++;
+      if (frame < 130) requestAnimationFrame(draw);
+      else ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    draw();
+  }
+
+  // Init
+  (function () {
+    const d = getData();
+    if (d) showCounter(d);
+  })();
+</script>
+
+</body>
+</html>
