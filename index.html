@@ -467,7 +467,7 @@
     if (checkedToday) {
       area.innerHTML = `<div class="already-msg">✓ ¡Ya marcaste el día de hoy!</div>`;
     } else {
-      area.innerHTML = `<button class="btn-check" onclick="checkDay()">✓ ¡Marqué hoy sin vape!</button>`;
+      area.innerHTML = `<button class="btn-check" onclick="checkDay()">✓ ¡Marqué hoy!</button>`;
     }
 
     document.getElementById('motivation-text').textContent = getMotivation(d.days, checkedToday);
