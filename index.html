@@ -32,7 +32,6 @@
       padding: 2rem 1rem;
     }
 
-    /* Background texture */
     body::before {
       content: '';
       position: fixed;
@@ -51,7 +50,7 @@
       max-width: 460px;
     }
 
-    /* ── SETUP SCREEN ── */
+    /* ── SETUP ── */
     .setup {
       background: var(--card);
       border-radius: 24px;
@@ -59,7 +58,7 @@
       padding: 3rem 2.5rem;
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1.4rem;
       box-shadow: 0 2px 24px rgba(0,0,0,0.05);
     }
 
@@ -111,8 +110,21 @@
       transition: border-color 0.2s;
     }
 
-    .input-wrap input::placeholder { color: #b0ae a6; }
     .input-wrap input:focus { border-color: var(--green-mid); background: #fff; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
 
     .btn-start {
       background: var(--green);
@@ -125,18 +137,16 @@
       font-weight: 500;
       cursor: pointer;
       transition: background 0.15s, transform 0.1s;
-      letter-spacing: 0.01em;
     }
 
     .btn-start:hover { background: #155e43; }
     .btn-start:active { transform: scale(0.97); }
 
-    /* ── COUNTER SCREEN ── */
+    /* ── COUNTER ── */
     .counter {
       display: none;
       flex-direction: column;
       align-items: center;
-      gap: 0;
     }
 
     .top-bar {
@@ -157,8 +167,14 @@
       text-underline-offset: 3px;
       padding: 0;
     }
-
     .reset-link:hover { color: #c0392b; }
+
+    .greeting {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-style: italic;
+    }
 
     .goal-badge {
       background: var(--green-light);
@@ -205,16 +221,11 @@
       cursor: pointer;
       width: 100%;
       transition: background 0.15s, transform 0.1s;
-      letter-spacing: 0.01em;
     }
 
     .btn-check:hover:not(:disabled) { background: #155e43; }
     .btn-check:active:not(:disabled) { transform: scale(0.97); }
-
-    .btn-check:disabled {
-      background: #a8d5be;
-      cursor: not-allowed;
-    }
+    .btn-check:disabled { background: #a8d5be; cursor: not-allowed; }
 
     .already-msg {
       background: var(--accent);
@@ -229,11 +240,13 @@
 
     .motivation {
       margin-top: 1.5rem;
-      font-size: 14px;
+      font-size: 15px;
       color: var(--muted);
       text-align: center;
-      min-height: 20px;
+      min-height: 24px;
       font-style: italic;
+      line-height: 1.6;
+      padding: 0 0.5rem;
     }
 
     .streak-row {
@@ -250,10 +263,8 @@
       border-radius: 50%;
       background: var(--accent);
     }
-
     .day-dot.done { background: var(--green-mid); }
 
-    /* ── CONFETTI ── */
     #confetti-canvas {
       position: fixed;
       top: 0; left: 0;
@@ -262,7 +273,6 @@
       z-index: 999;
     }
 
-    /* ── RESPONSIVE ── */
     @media (max-width: 480px) {
       .setup { padding: 2rem 1.5rem; }
       .big-num { font-size: 88px; }
@@ -279,17 +289,20 @@
   <div class="setup" id="setup-view">
     <div class="setup-icon">🌿</div>
     <h1>Empieza tu reto</h1>
-    <p>Escribe tu meta y te crearemos un contador personalizado. El progreso se guarda en este dispositivo.</p>
+    <p>Escribe tu nombre y tu meta. El progreso se guarda en este dispositivo.</p>
+
     <div class="input-wrap">
-      <label for="goal-input">Tu meta</label>
-      <input
-        type="text"
-        id="goal-input"
-        placeholder="Ej: Quiero dejar de fumar vape"
-        maxlength="80"
-        autocomplete="off"
-      />
+      <label for="name-input">Tu nombre</label>
+      <input type="text" id="name-input" placeholder="Ej: Sofía" maxlength="30" autocomplete="off" />
     </div>
+
+    <div class="divider">tu meta</div>
+
+    <div class="input-wrap">
+      <label for="goal-input">¿Qué quieres lograr?</label>
+      <input type="text" id="goal-input" placeholder="Ej: Quiero dejar de fumar vape" maxlength="80" autocomplete="off" />
+    </div>
+
     <button class="btn-start" onclick="startCounter()">Crear mi contador →</button>
   </div>
 
@@ -298,6 +311,7 @@
     <div class="top-bar">
       <button class="reset-link" onclick="resetCounter()">Reiniciar desde cero</button>
     </div>
+    <div class="greeting" id="display-greeting"></div>
     <div class="goal-badge" id="display-goal"></div>
     <div class="number-block">
       <span class="big-num" id="day-count">0</span>
@@ -311,17 +325,84 @@
 </div>
 
 <script>
-  const DATA_KEY = 'reto_counter_v1';
+  const DATA_KEY = 'reto_counter_v2';
 
-  const quotes = [
-    "Cada día sin vape es una victoria real.",
-    "Tu cuerpo te lo agradece. 💚",
-    "Un día a la vez. Eso es todo.",
-    "Lo que empiezas hoy, te define mañana.",
-    "La disciplina es la forma más alta de autocuidado.",
-    "Tú puedes más de lo que crees.",
-    "Pequeñas victorias, grandes cambios.",
-  ];
+  // ── LIBRERÍA DE MENSAJES ──
+  const messages = {
+    start: [
+      "El primer paso siempre es el más valiente. 🌱",
+      "Hoy empieza una nueva versión de ti.",
+      "Cada gran cambio empieza con una decisión. Ya la tomaste.",
+      "No tienes que ser perfecta, solo consistente.",
+      "El viaje de mil kilómetros empieza con un paso. Este es el tuyo.",
+    ],
+    week1: [
+      "Un día a la vez. Eso es todo lo que necesitas.",
+      "Tu cuerpo ya está agradeciéndote. 💚",
+      "Lo que estás haciendo es más difícil de lo que parece. Y lo estás logrando.",
+      "Cada hora que pasa es una victoria pequeña.",
+      "La incomodidad de hoy es la fortaleza de mañana.",
+      "No rompas la racha. Vale demasiado.",
+      "Eres más fuerte que cualquier antojo.",
+      "El primer obstáculo siempre es el más duro. Ya lo estás pasando.",
+      "Confía en el proceso. Tu cuerpo sana más rápido de lo que crees.",
+    ],
+    week1done: [
+      "¡Una semana completa! Eso no lo hace cualquiera. 🔥",
+      "7 días. Una semana entera. Eres increíble.",
+      "La primera semana es la más difícil. Ya la superaste. 💪",
+    ],
+    weeks2_3: [
+      "Ya demostraste que puedes. Ahora demuestra que quieres. 🌿",
+      "Cada día que pasa, el antojo se hace más pequeño.",
+      "Estás construyendo una nueva identidad, ladrillo a ladrillo.",
+      "La disciplina es libertad disfrazada de esfuerzo.",
+      "No te imaginas lo orgullosa que te vas a sentir al llegar a un mes.",
+      "Lo que resistes, te fortalece.",
+      "Tu versión futura ya te está aplaudiendo.",
+      "Sigues aquí. Eso lo dice todo.",
+      "Cada 'no' que le dices al vape es un 'sí' a ti misma.",
+      "Las personas que más admiras también tuvieron días difíciles. Y siguieron.",
+    ],
+    month1: [
+      "¡UN MES! Eso es pura dedicación. 🎉",
+      "30 días. Treinta. Lo lograste de verdad.",
+      "Un mes sin vape. Tu cuerpo está completamente diferente por dentro.",
+    ],
+    beyond: [
+      "A estas alturas ya no es un reto, es tu nueva normalidad. 🌟",
+      "Cada día extra es un regalo que te das a ti misma.",
+      "Ya eres esa persona que decidiste ser. Sigue siéndolo.",
+      "Lo que lograste es real. Nadie te lo puede quitar.",
+      "Inspiración silenciosa para todos los que te rodean.",
+      "Tu futuro yo no puede creer lo lejos que llegaste.",
+      "Esto ya es parte de quien eres. Y es hermoso.",
+      "Eres la prueba de que sí se puede.",
+      "Cada día que añades es un capítulo más de tu historia.",
+      "No mires atrás. Todo lo bueno está hacia adelante.",
+    ],
+    checked_today: [
+      "Ya marcaste hoy. Descansa, te lo ganaste. 💚",
+      "Día registrado. Mañana vuelves y sigues.",
+      "Hecho por hoy. Así de simple, así de poderoso.",
+      "Otro día en el libro. Sigue así.",
+      "Registrado. Tu racha sigue viva. 🌿",
+    ]
+  };
+
+  function getMotivation(days, checkedToday) {
+    if (checkedToday) return pick(messages.checked_today);
+    if (days === 0) return pick(messages.start);
+    if (days === 7) return pick(messages.week1done);
+    if (days === 30) return pick(messages.month1);
+    if (days >= 31) return pick(messages.beyond);
+    if (days >= 8) return pick(messages.weeks2_3);
+    return pick(messages.week1);
+  }
+
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
 
   function goalToTitle(text) {
     const t = text.trim();
@@ -329,7 +410,6 @@
     if (lower.includes('dejar de fumar')) return 'Días sin fumar vape';
     if (lower.includes('fumar')) return 'Días sin fumar';
     if (lower.includes('vape')) return 'Días sin vape';
-    // Strip opening verbs and return as-is
     const stripped = t.replace(/^(quiero|voy a|necesito|voy a lograr|quiero lograr)\s+/i, '');
     return 'Días: ' + stripped.charAt(0).toLowerCase() + stripped.slice(1);
   }
@@ -344,16 +424,16 @@
     catch { return null; }
   }
 
-  function saveData(d) {
-    localStorage.setItem(DATA_KEY, JSON.stringify(d));
-  }
+  function saveData(d) { localStorage.setItem(DATA_KEY, JSON.stringify(d)); }
 
   function startCounter() {
-    const input = document.getElementById('goal-input').value.trim();
-    if (!input) { document.getElementById('goal-input').focus(); return; }
+    const nameVal = document.getElementById('name-input').value.trim();
+    const goalVal = document.getElementById('goal-input').value.trim();
+    if (!goalVal) { document.getElementById('goal-input').focus(); return; }
     const d = {
-      goal: input,
-      title: goalToTitle(input),
+      name: nameVal || null,
+      goal: goalVal,
+      title: goalToTitle(goalVal),
       days: 0,
       lastChecked: null,
       startDate: todayStr(),
@@ -368,22 +448,30 @@
     const cv = document.getElementById('counter-view');
     cv.style.display = 'flex';
 
+    const greetEl = document.getElementById('display-greeting');
+    if (d.name) {
+      const hour = new Date().getHours();
+      const saludo = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+      greetEl.textContent = `${saludo}, ${d.name} 👋`;
+    } else {
+      greetEl.textContent = '';
+    }
+
     document.getElementById('display-goal').textContent = d.title;
     document.getElementById('day-count').textContent = d.days;
 
     const today = todayStr();
+    const checkedToday = d.lastChecked === today;
     const area = document.getElementById('check-area');
 
-    if (d.lastChecked === today) {
+    if (checkedToday) {
       area.innerHTML = `<div class="already-msg">✓ ¡Ya marcaste el día de hoy!</div>`;
     } else {
       area.innerHTML = `<button class="btn-check" onclick="checkDay()">✓ ¡Marqué hoy sin vape!</button>`;
     }
 
-    const motivIdx = d.days % quotes.length;
-    document.getElementById('motivation-text').textContent = d.days > 0 ? quotes[motivIdx] : 'Presiona el botón al final de cada día.';
+    document.getElementById('motivation-text').textContent = getMotivation(d.days, checkedToday);
 
-    // Draw streak dots (last 14 days)
     const dots = document.getElementById('streak-dots');
     dots.innerHTML = '';
     const history = d.history || [];
@@ -418,10 +506,10 @@
     localStorage.removeItem(DATA_KEY);
     document.getElementById('counter-view').style.display = 'none';
     document.getElementById('setup-view').style.display = 'flex';
+    document.getElementById('name-input').value = '';
     document.getElementById('goal-input').value = '';
   }
 
-  // ── CONFETTI ──
   function launchConfetti() {
     const canvas = document.getElementById('confetti-canvas');
     const ctx = canvas.getContext('2d');
@@ -447,8 +535,8 @@
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot * Math.PI / 180);
         ctx.fillStyle = p.c;
-        if (p.shape === 'rect') ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6);
-        else { ctx.beginPath(); ctx.arc(0, 0, p.r / 2, 0, Math.PI * 2); ctx.fill(); }
+        if (p.shape === 'rect') ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r * 0.6);
+        else { ctx.beginPath(); ctx.arc(0, 0, p.r/2, 0, Math.PI*2); ctx.fill(); }
         ctx.restore();
         p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.vy += 0.1;
       });
@@ -459,7 +547,6 @@
     draw();
   }
 
-  // Init
   (function () {
     const d = getData();
     if (d) showCounter(d);
